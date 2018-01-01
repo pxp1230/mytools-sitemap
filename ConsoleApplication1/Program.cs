@@ -12,20 +12,18 @@ namespace ConsoleApplication1
     class Program
     {
         static string host = "";
-        static string date = "";
         static void Main(string[] args)
         {
             DirectoryInfo curDirectory = new DirectoryInfo(Environment.CurrentDirectory);
             if (curDirectory.Exists)
             {
                 host = "https://" + curDirectory.Name;
-                date = DateTime.Now.ToString("yyyy-MM-dd");
                 FileInfo sitemapTXT = new FileInfo(Path.Combine(curDirectory.FullName, "sitemap.xml"));
                 StreamWriter writer = sitemapTXT.CreateText();
                 writer.WriteLine(@"<?xml version=""1.0"" encoding=""UTF-8""?>
 <urlset xmlns=""http://www.sitemaps.org/schemas/sitemap/0.9"" xmlns:image=""http://www.google.com/schemas/sitemap-image/1.1"" xmlns:xhtml=""http://www.w3.org/1999/xhtml"">");
-                writer.WriteLine(Wrap(host + "/index.html"));
-                writer.WriteLine(Wrap(host + "/README.html"));
+                writer.WriteLine(Wrap(host + "/index.html", File.GetLastWriteTime(Path.Combine(curDirectory.FullName, "index.html"))));
+                writer.WriteLine(Wrap(host + "/README.html", File.GetLastWriteTime(Path.Combine(curDirectory.FullName, "README.html"))));
                 Write(curDirectory, curDirectory, writer);//递归调用
                 writer.WriteLine(@"</urlset>");
                 writer.Close();
@@ -60,11 +58,12 @@ namespace ConsoleApplication1
                 {
                     string date = y.ChildNodes[0].InnerText;
                     string file = y.ChildNodes[1].SelectSingleNode("a").Attributes["href"].Value;
-                    writer.WriteLine(Wrap(host + UrlEncode(relativePath) + "/" + file));
-                    file = UrlDecode(file);
+                    string realFile = UrlDecode(file);
+                    FileInfo fi = new FileInfo(Path.Combine(curDirectory.FullName, realFile));
+                    writer.WriteLine(Wrap(host + UrlEncode(relativePath) + "/" + file, fi.LastWriteTime));
                     if (date == "[目录]")
                     {
-                        Write(rootDirectory, new FileInfo(Path.Combine(curDirectory.FullName, file)).Directory, writer);
+                        Write(rootDirectory, fi.Directory, writer);
                     }
                 }
             }
@@ -83,11 +82,11 @@ namespace ConsoleApplication1
         {
             return System.Net.WebUtility.UrlEncode(relativePath).Replace("%2F", "/").Replace("+", "%20");
         }
-        static string Wrap(string raw)
+        static string Wrap(string raw, DateTime date)
         {
             return @"  <url>
     <loc>" + raw + @"</loc>
-    <lastmod>" + date + @"</lastmod>
+    <lastmod>" + date.ToString("yyyy-MM-dd") + @"</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>";
