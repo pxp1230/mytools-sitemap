@@ -11,16 +11,13 @@ namespace ConsoleApplication1
 {
     class Program
     {
+        static string host = "";
         static void Main(string[] args)
         {
-#if DEBUG
-            //测试：
-            args = new string[1];
-            args[0] = "F:\\pxp1230.github.io";
-#endif
-            DirectoryInfo curDirectory = new DirectoryInfo(args.Length == 1 ? args[0] : Environment.CurrentDirectory);
+            DirectoryInfo curDirectory = new DirectoryInfo(Environment.CurrentDirectory);
             if (curDirectory.Exists)
             {
+                host = "https://" + curDirectory.Name;
                 FileInfo sitemapTXT = new FileInfo(Path.Combine(curDirectory.FullName, "sitemap.txt"));
                 StreamWriter writer = sitemapTXT.CreateText();
                 writer.WriteLine(host + "/index.html");
@@ -41,7 +38,6 @@ namespace ConsoleApplication1
             public string date;
             public string file;
         }
-        const string host = "http://pxp1230.github.io";
         private static void Write(DirectoryInfo rootDirectory, DirectoryInfo curDirectory, StreamWriter writer)
         {
             FileInfo indexFile = new FileInfo(Path.Combine(curDirectory.FullName, "index.html"));
@@ -59,8 +55,8 @@ namespace ConsoleApplication1
                 {
                     string date = y.ChildNodes[0].InnerText;
                     string file = y.ChildNodes[1].SelectSingleNode("a").Attributes["href"].Value;
+                    writer.WriteLine(host + UrlEncode(relativePath) + "/" + file);
                     file = UrlDecode(file);
-                    writer.WriteLine(host + relativePath + "/" + file);
                     if (date == "[目录]")
                     {
                         Write(rootDirectory, new FileInfo(Path.Combine(curDirectory.FullName, file)).Directory, writer);
@@ -77,6 +73,10 @@ namespace ConsoleApplication1
         static string UrlDecode(string url)
         {
             return System.Net.WebUtility.UrlDecode(url);
+        }
+        static string UrlEncode(string relativePath)
+        {
+            return System.Net.WebUtility.UrlEncode(relativePath).Replace("%2F", "/").Replace("+", "%20");
         }
     }
 }
