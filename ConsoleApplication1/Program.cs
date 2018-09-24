@@ -52,7 +52,14 @@ namespace ConsoleApplication1
                 sr.Close();
                 int from = str.IndexOf("<body>"), to = str.IndexOf("</body>") + 7;
                 XmlDocument xmlDoc = new XmlDocument();
-                xmlDoc.LoadXml(str.Substring(from, to - from));
+                try
+                {
+                    xmlDoc.LoadXml(str.Substring(from, to - from));
+                }
+                catch (Exception)
+                {
+                    return;
+                }
                 XmlNodeList x = xmlDoc.DocumentElement.SelectNodes("//tr");
                 foreach (XmlNode y in x)
                 {
